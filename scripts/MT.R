@@ -7,22 +7,19 @@
 #
 #################################################
 
-# Library & dataset
 rm(list=ls()) # remove all objects
-# neaded packages
-library(dplyr)
+
+# Packages ----------------------------------------------------------------
+
 library(tidyverse)
 library(ggplot2)
 library(ggeffects)
 library(afex)
-library(hrbrthemes)
 library(emmeans)
-library(som)
-source("05.functions/add_object_to_rda.R")
 
-# loading data ----
-#load("dataset/Qualia_joystick.RData") 
-load("04.data_preprocessing/Qualia_joystick.RData") 
+# Data --------------------------------------------------------------------
+
+load("data/Qualia_joystick.RData") 
 
 # dataset  MT
 velocity<-joystick_dataset%>% #cf function trial vec
@@ -47,7 +44,9 @@ velocity<-joystick_dataset%>% #cf function trial vec
   'colnames<-'(c("subject","group" , "procedure", "direction" , "joystick", "vector","count"))%>%
   data.frame()
 
-# plot MT emotion ----
+# Plots -------------------------------------------------------------
+
+# barplot
 velocity%>%
   select(-count)%>%
   filter(procedure=="emotion")%>%
@@ -72,10 +71,10 @@ velocity%>%
         panel.background = element_blank(),
         axis.line = element_line(colour = "black"))
 
-ggsave("07.figures/MT_typical.tiff", units="in", width=5, height=4, dpi=200, compression = 'lzw')
+ggsave("figures/MT_bar.tiff", units="in", width=5, height=4, dpi=200, compression = 'lzw')
 
 # Emotion plot
-MT_typica_emotion<-velocity%>%
+MT_emotion<-velocity%>%
   select(-count)%>%
   filter(procedure=="emotion")%>%
   mutate( direction= case_when(direction == "to happy" ~ "neutral to happy",
@@ -83,11 +82,10 @@ MT_typica_emotion<-velocity%>%
           joystick = case_when( joystick == "enter" ~ "Formation",
                                 joystick == "exit" ~ "Disformation"))%>%
   spread(direction,vector)%>%
-  #mutate(direction = factor(direction, levels = c("happy to neutral","neutral to happy")))%>%
   data.frame()%>%
   'colnames<-'(c("subject", "Gender","procedure","Joystick","HtN","NtH"))
 
-MT_typica_emotion%>%
+MT_emotion%>%
   ggplot(aes(y=HtN,x=NtH) )+
   geom_point(aes(  color=Gender, shape=Joystick),size=3)+ 
   geom_abline(intercept = 0, slope = 1)+
@@ -101,11 +99,11 @@ MT_typica_emotion%>%
         axis.line = element_line(colour = "black"),
         axis.text.x = element_text(angle = 0, vjust = 0.5, hjust=1))
 
-ggsave("07.figures/MT_typica_emotion.tiff", units="in", width=6, height=4, dpi=200, compression = 'lzw')
+ggsave("figures/MT_emotion.tiff", units="in", width=6, height=4, dpi=200, compression = 'lzw')
 
 
 # gender plot
-MT_typica_gender<-velocity%>%
+MT_gender<-velocity%>%
   select(-count)%>%
   filter(procedure=="gender")%>%
   mutate( direction= case_when(direction == "to female" ~ "male to female",
@@ -113,11 +111,10 @@ MT_typica_gender<-velocity%>%
           joystick = case_when( joystick == "enter" ~ "Formation",
                                 joystick == "exit" ~ "Disformation"))%>%
   spread(direction,vector)%>%
-  #mutate(direction = factor(direction, levels = c("happy to neutral","neutral to happy")))%>%
   data.frame()%>%
   'colnames<-'(c("subject", "Gender","procedure","Joystick","FtM","MtF"))
 
-MT_typica_gender%>%
+MT_gender%>%
   ggplot(aes(x=FtM,y=MtF) )+
   geom_point(aes(  color=Gender, shape=Joystick),size=3)+ 
   geom_abline(intercept = 0, slope = 1)+
@@ -131,21 +128,10 @@ MT_typica_gender%>%
         axis.line = element_line(colour = "black"),
         axis.text.x = element_text(angle = 15, vjust = 0.5, hjust=1))
 
-ggsave("07.figures/MT_typica_gender.tiff", units="in", width=6, height=4, dpi=200, compression = 'lzw')
+ggsave("figures/MT_gender.tiff", units="in", width=6, height=4, dpi=200, compression = 'lzw')
 
-MT_typica_gender%>%
-  filter(gender=="female")%>%
-  mutate( direction= case_when(direction == "female to male" ~ "male",
-                               direction ==  "male to female"~ "female"))%>%
-  ggplot( aes(y=formation,x=direction, colour = factor(direction)) )+
-  stat_summary(fun.y = mean, geom = "point", size = 3,show.legend = FALSE)+
-  stat_summary(fun.data = mean_se, geom = "errorbar",show.legend = FALSE)+
- labs(y="MT formation (ms)",x="Direction (to)")+
-  theme(text=element_text(size=16,  family="Helvetica"),
-        panel.background = element_blank(),
-        axis.line = element_line(colour = "black"))
 
-ggsave("07.figures/MT_typica_gender_female.tiff", units="in", width=5, height=4, dpi=200, compression = 'lzw')
+# Stats -------------------------------------------------------------
 
 #Stat emotion
 anova<-velocity%>%
@@ -159,10 +145,7 @@ anova<-velocity%>%
   summarise_at(vars(vector), list(mean))%>%
   'colnames<-'(c("subject", "gender" , "procedure", "direction" ,"transition", "velocity"))
 
-
-
 a1 <- aov_ez("subject", "velocity", anova,  within = c("direction","transition"), between = "gender")
-
 emmeans(a1,pairwise~ transition, adjust="bonf")
 emmeans(a1,pairwise~ direction|transition, adjust="bonf")
 emmeans(a1,pairwise~ direction|gender|transition, adjust="bonf")
@@ -179,17 +162,8 @@ anova<-velocity%>%
   summarise_at(vars(vector), list(mean))%>%
   'colnames<-'(c("subject", "gender" , "procedure", "direction" ,"transition", "velocity"))
 
-
 a2 <- aov_ez("subject", "velocity", anova,  within = c("direction","transition"), between = "gender")
 emmeans(a2,pairwise~ direction|gender|transition, adjust="bonf")
-
-
-
-######## save data
-
-MT_typical<-anova
-
-add_object_to_rda(MT_typical,"04.data_preprocessing/typical.RData", overwrite = TRUE)
 
 #################################################
 # 

@@ -7,25 +7,23 @@
 #
 #################################################
 
-############### Parameters ----
-## library ----
-rm(list=ls())
-library(dplyr)
+rm(list=ls()) # remove all objects
+
+# Packages ----------------------------------------------------------------
+
 library(tidyverse)
 library(ggplot2)
 library(ggeffects)
-library(lsmeans)
 library(afex)
-library(ggpirate)
-source("05.functions/add_object_to_rda.R")
+library(emmeans)
+library(broom)
+library(effectsize)
 
-## loading data ----
+# Data --------------------------------------------------------------------
 
-load("04.data_preprocessing/Qualia_joystick.RData") 
+load("data/Qualia_joystick.RData") 
 
-
-## Data
-############### Valuation ----
+# Valuation
 VAVplot<-valuation_dataset%>%
   mutate(score= case_when(procedure=="Valence" & score== 1 ~ -3,
                           procedure=="Valence" & score== 2 ~ -2,
@@ -53,91 +51,59 @@ VAVplot<-valuation_dataset%>%
          gender=  case_when(file=="HF" | file=="NF" ~ "female",
                             file=="HM" | file=="NM" ~ "male"))
 
+# Plots -------------------------------------------------------------
 
-# plot valuatioon  ----
-#plot
 ggplot(VAVplot, aes(x=Valence, y=Arousal, color=file, shape=group)) +
   geom_point(size=6, alpha=0.6)+
   coord_cartesian(ylim = c(1,7),xlim = c(-3,3))+
   labs(x="Valence valuation",y="Arousal Valuation",fill="Categories")+theme_classic()
 
+# Stats -------------------------------------------------------------
 
+# Valenza
+x<-VAVplot%>%
+  select( subject,group,emotion, gender,Valence )%>%
+'colnames<-'(c("Subject","Group","Emotion","Gender","score"))%>%
+  mutate(Subject = as.factor(Subject))
 
-
-############### ANOVA VALENCE ----
-# dataset ----
-temp<-VAVplot
-
-x<-temp%>%
-  select( subject,group,emotion, gender,Valence )
-
-colnames(x)<-c("Subject","Group","Emotion","Gender","score")
-
+# summary
 x%>%
   group_by(Emotion)%>%
   summarise_at(vars(score), list(mean,sd))
 
-x$Subject<-as.factor(x$Subject)
-
+# ANOVA Valence
 a1 <- aov_ez("Subject", "score", x,within = c("Gender", "Emotion"))
-m1<-emmeans(a1,pairwise~ Group, adjust="bonf")
-
 m1<-emmeans(a1,pairwise~ Emotion, adjust="bonf")
 
 m1<-tidy(m1$contrasts)
 
-t <- 18.16
-df<- 27
-
+t <- m1$statistic
+df<- m1$df
 t_to_d(t,df,paired = TRUE)
 
 
- a1 <- aov_ez("Subject", "score", x, between = "Group",within = c("Gender", "Emotion"))
-# emmeans(a1,pairwise~ Group, adjust="bonf")
-# emmeans(a1,pairwise~ Emotion, adjust="bonf")
- emmeans(a1,pairwise~ Group|Emotion, adjust="bonf")
+# Arousal
+x<-VAVplot%>%
+  select( subject,group,emotion, gender,Arousal )%>%
+  'colnames<-'(c("Subject","Group","Emotion","Gender","score"))%>%
+  mutate(Subject = as.factor(Subject))
 
-# afex_plot(a1, x = "Emotion", trace = "Condition", error = "within",mapping = c("color", "fill"),
-#           data_geom = geom_boxplot, data_arg = list(width = 0.4),
-#           point_arg = list(size = 1.5), line_arg = list(size = 1))+theme_classic()
-# m1<-emmeans(a1,pairwise~ Emotion,adjust="bonf")
-
-############### ANOVA AROUSAL ----
-# dataset ----
-x<-temp%>%
-  select( subject,group,emotion, gender, Arousal)
-colnames(x)<-c("Subject","Group","Emotion","Gender","score")
-
+# summary
 x%>%
   group_by(Emotion)%>%
   summarise_at(vars(score), list(mean,sd))
 
-x$Subject<-as.factor(x$Subject)
-a1 <- aov_ez("Subject", "score", x, between = "Group",within = c("Gender", "Emotion"))
+# ANOVA Arousal
 a1 <- aov_ez("Subject", "score", x,within = c("Gender", "Emotion"))
 m2<-emmeans(a1,pairwise~ Emotion, adjust="bonf")
 m3<-emmeans(a1,pairwise~ Gender|Emotion, adjust="bonf")
-m4<-emmeans(a1,pairwise~ Group|Emotion, adjust="bonf")
-
 
 m2<-tidy(m2$contrasts)
 t_to_d(m2$statistic,m2$df,paired = TRUE)
-t_to_d(17.99,38,paired = TRUE)
 
-# emmeans(a1,pairwise~ Emotion, adjust="bonf")
-# 
-# afex_plot(a1, x = "Emotion", trace = "Condition", error = "within",mapping = c("color", "fill"),
-#           data_geom = geom_boxplot, data_arg = list(width = 0.4),
-#           point_arg = list(size = 1.5), line_arg = list(size = 1))+theme_classic()
-# m1<-emmeans(a1,pairwise~ Emotion,adjust="bonf")
-
-######## save data
-
-
-val_typical<-VAVplot
-save(val_typical,file="04.data_preprocessing/typical.RData")
-add_object_to_rda(val_typical,"04.data_preprocessing/typical.RData", overwrite = TRUE)
-
+m3<-tidy(m3$contrasts)
+t_to_d(m3$statistic[1],m3$df[1],paired = TRUE)
+t_to_d(m3$statistic[2],m3$df[2],paired = TRUE)
 
 #################################################
 # 

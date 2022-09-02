@@ -38,7 +38,6 @@ pm<-joystick_dataset%>%
 # Plots -------------------------------------------------------------
 
 # MT by gender
-
 pm%>%
   'colnames<-'(c("subject","group","Condition","PM","attribut"))%>%
   ggplot( aes(x = Condition, y = PM)) +
@@ -51,7 +50,6 @@ pm%>%
   facet_grid(group ~ .)
 
 # MT
-
 pm%>%
   'colnames<-'(c("subject","group","Condition","PM","attribut"))%>%
   ggplot( aes(x = Condition, y = PM)) +
