@@ -1,9 +1,9 @@
 #################################################
 # 
-# Experiment:     Qualia_Joystick_binocular_rivalry
+# Experiment:     QualiaJoystick_binocular_rivalry
 # Programmer:     Thomas Quettier
-# Date:           01/06/2021
-# Description:    lms on joystick velocity
+# Date:           02/09/2022
+# Description:    face emotion - binocular rivalry
 #
 #################################################
 
@@ -109,3 +109,9 @@ plot%>%
   theme_ridges() + 
   theme(legend.position = "none")+
   facet_grid(joystick ~ .)
+
+#################################################
+# 
+# END
+#
+#################################################

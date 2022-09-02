@@ -1,9 +1,9 @@
 #################################################
 # 
-# Experiment:     Qualiamoebius_binocular_rivalry
+# Experiment:     QualiaJoystick_binocular_rivalry
 # Programmer:     Thomas Quettier
-# Date:           04/11/2020
-# Description:    Stimuli Valuation analysis
+# Date:           02/09/2022
+# Description:    face emotion - binocular rivalry
 #
 #################################################
 

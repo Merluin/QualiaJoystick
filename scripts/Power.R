@@ -1,9 +1,9 @@
 #################################################
 # 
-# Experiment:     Qualia_Soma
+# Experiment:     QualiaJoystick_binocular_rivalry
 # Programmer:     Thomas Quettier
-# Date:           12/02/2021
-# Description:    power analysis
+# Date:           02/09/2022
+# Description:    face emotion - binocular rivalry
 #
 #################################################
 
@@ -17,3 +17,9 @@ sig.level <- 0.05
 power <- 0.8
   
 pwr.t.test(  d=d  , sig.level=sig.level , power =power, type =  "paired")
+
+#################################################
+# 
+# END
+#
+#################################################

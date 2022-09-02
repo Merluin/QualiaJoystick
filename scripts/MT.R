@@ -1,9 +1,9 @@
 #################################################
 # 
-# Experiment:     Qualia_Joystick_binocular_rivalry
+# Experiment:     QualiaJoystick_binocular_rivalry
 # Programmer:     Thomas Quettier
-# Date:           04/11/2020
-# Description:    Velocity for thesis
+# Date:           02/09/2022
+# Description:    face emotion - binocular rivalry
 #
 #################################################
 
