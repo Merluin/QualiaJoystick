@@ -46,23 +46,44 @@ VAVplot<-valuation_dataset%>%
   mutate(Arousal= round(Arousal,2),
          Valence= round(Valence,2))%>%
   as.data.frame()%>%
-  mutate(emotion= case_when(file=="HF" | file=="HM" ~ "happy",
+  mutate(Emotion= case_when(file=="HF" | file=="HM" ~ "happy",
                             file=="NF" | file=="NM" ~ "neutral"),
-         gender=  case_when(file=="HF" | file=="NF" ~ "female",
-                            file=="HM" | file=="NM" ~ "male"))
+         Gender=  case_when(file=="HF" | file=="NF" ~ "female",
+                            file=="HM" | file=="NM" ~ "male"),
+         Face=  case_when(file=="HF"  ~ "Happy female",
+                           file=="NF"  ~ "Neutral female",
+                           file=="HM"  ~ "Happy male",
+                           file=="NM"  ~ "Neutral male"),
+         group=  case_when(group=="female"  ~ "Female participants",
+                           group=="male"  ~ "Male participants"))
 
 # Plots -------------------------------------------------------------
-
-ggplot(VAVplot, aes(x=Valence, y=Arousal, color=file, shape=group)) +
-  geom_point(size=6, alpha=0.6)+
+VAVplot%>%
+  group_by(subject, Emotion)%>%
+  summarise_at(vars(Arousal,Valence), list(mean))%>%
+  ggplot( aes(x=Valence, y=Arousal, color=Emotion, shape = Emotion)) +
+  geom_point(size=4, alpha=0.6)+
   coord_cartesian(ylim = c(1,7),xlim = c(-3,3))+
-  labs(x="Valence valuation",y="Arousal Valuation",fill="Categories")+theme_classic()
+  labs(x="Valence",y="Arousal",fill="Categories")+theme_classic()+
+#facet_grid(.~group)+
+  coord_fixed(ratio = 1)+
+  xlab("Valence")+
+  ylab("Arousal")+
+  theme(axis.title.x = element_text(size = 16, family="Arial"),
+        axis.title.y = element_text(size = 16, family="Arial"),
+        axis.ticks = element_blank(),
+        strip.text.x = element_text(size = 14, face = "bold", family="Arial"),
+        strip.text.y = element_text(size = 14, face = "bold", family="Arial"),
+        panel.background = element_rect(fill = "white", color = NA))+
+  theme(legend.position = "right")+
+  scale_colour_manual(values=c("#008b39","#fd345a"))
+  
 
 # Stats -------------------------------------------------------------
 
 # Valenza
 x<-VAVplot%>%
-  select( subject,group,emotion, gender,Valence )%>%
+  select( subject,group,Emotion, Gender,Valence )%>%
 'colnames<-'(c("Subject","Group","Emotion","Gender","score"))%>%
   mutate(Subject = as.factor(Subject))
 

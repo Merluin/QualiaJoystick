@@ -1,0 +1,596 @@
+---
+title: "**Mapping the time-course of in out of consciousness during binocular rivalry: The case of expressions and gender of face stimuli**"
+subtitle: "Supplementary Materials"
+author: 
+  - "Thomas Quettier"
+  - "Nicolò Di Lello"
+  - "Naotsugu Tsuchiya"
+  - "Paola Sessa"
+output:
+  bookdown::pdf_document2:
+    toc: true
+    toc_depth: 3
+    highlight: pygments
+bibliography: ["../files/references.bib"]
+header-includes:
+  - \AddToHook{cmd/section/before}{\clearpage}
+  - \usepackage{titling}
+  - \setcounter{table}{0} 
+  - \renewcommand*{\thetable}{S\arabic{table}}
+  - \setcounter{figure}{0} 
+  - \renewcommand*{\thefigure}{S\arabic{figure}}
+  - \usepackage{lscape}
+  - \newcommand{\blandscape}{\begin{landscape}}
+  - \newcommand{\elandscape}{\end{landscape}}
+  - \usepackage[nottoc]{tocbibind}
+---
+
+```{r setup, include=FALSE, cache=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      message = FALSE,
+                      warning = FALSE,
+                      fig.align = "center",
+                      fig.retina = 2,
+                      dev = "pdf")
+```
+
+```{r packages, cache=FALSE}
+
+library(here)
+library(magrittr)
+library(tidyr)
+library(dplyr)
+library(kableExtra)
+library(flextable)
+library(ggplot2)
+library(emmeans)
+library(lme4)
+library(lmerTest)
+library(effects)
+library(tidyverse)
+library(xtable)
+library(ftExtra)
+library(broom)
+library(broom.mixed)
+library(effects)
+library(ggcorrplot)
+library(PerformanceAnalytics)
+
+devtools::load_all()
+```
+
+```{r data}
+dat <- readRDS(here("data","data.rds"))
+emo <- readRDS(here("data","emotion_correlation.rds"))
+gen <- readRDS(here("data","gender_correlation.rds"))
+stab <- readRDS(here("data","stability.rds"))
+```
+
+
+# General approach
+
+We used R (R Core Team, 2012) and lme4 (Bates, Maechler & Bolker, 2012) to perform a linear mixed effects analysis of the relationship between rivalry, consciousness phases  and subjects gender. As fixed effects, we entered rivalry and phases and subject gender (with interaction term) into the model. As random effects, we had intercepts for subjects. Visual inspection of residual plots did not reveal any obvious deviations from homoscedasticity or normality. P-values were obtained by anova of the full models for gender blocks and emotion blocks:
+
+
+```{r bestmodel, eval = FALSE, echo = TRUE}
+
+fit <- lmer(mean ~ rivalry*phase*gender + (1|subject)
+
+```
+
+\newpage
+## model selection
+
+The logic of the model selection is to compare the likelihood of different models. First, the model without any factor (the
+null model), then each model add a factor that we are interested in.
+
+```{r modelsselection, eval = FALSE, echo = TRUE}
+
+model1<-lmer(mean ~ 1 + (1|subject), dat) # null model
+
+model2<-lmer(mean ~ phase + (1|subject), data) # add consciousness phases: formation vs dissolution
+
+model3<-lmer(mean ~ phase + rivalry + (1|subject), data) # add rivalry: emotion(happy vs neutral) OR gender(male vs female)
+
+model4<-lmer(mean ~ rivalry*phase + (1|subject), data) # add interaction
+
+model5<-lmer(mean ~ phase + rivalry + gender + (1|subject), data) # add subject gender
+
+model6<-lmer(mean ~ rivalry*phase*gender + (1|subject), data) # add interaction
+
+anova(e1,e2,e3,e4,e5,e6)
+
+```
+
+
+### Model selection : Emotion rivalry
+
+```{r anovamodels_emotion, results='asis'}
+data <- dat%>%filter(procedure=="emotion")
+
+model1<-lmer(mean ~ 1 + (1|subject), data)
+model2<-lmer(mean ~ phase + (1|subject), data)
+model3<-lmer(mean ~ phase + rivalry + (1|subject), data)
+model4<-lmer(mean ~ rivalry*phase + (1|subject), data , contrasts = list(phase = contr.sum(2)/2, rivalry = contr.sum(2)/2))
+model5<-lmer(mean ~ phase + rivalry + group + (1|subject), data)
+model6<-lmer(mean ~ rivalry*phase*group + (1|subject), data , contrasts = list(phase = contr.sum(2)/2, rivalry = contr.sum(2)/2))
+
+modelselection<- anova(model1,model2,model3,model4,model5,model6)
+
+modelselection%>%
+  tidy()%>%
+  flextable()%>%
+  colformat_double(digits = 3) %>% 
+  width( width = 0.8)%>%
+   # set_table_properties(layout = "autofit")%>%
+      theme_vanilla()%>%
+  bg( i = ~ p.value < 0.05, bg = "#e6cc77", part = "body")
+```
+
+
+
+### Model selection : Gender rivalry
+
+
+```{r anovamodels_gender, results='asis'}
+data <- dat%>%filter(procedure=="gender")
+
+model1<-lmer(mean ~ 1 + (1|subject), data)
+model2<-lmer(mean ~ phase + (1|subject), data)
+model3<-lmer(mean ~ phase + rivalry + (1|subject), data)
+model4<-lmer(mean ~ rivalry*phase + (1|subject), data , contrasts = list(phase = contr.sum(2)/2, rivalry = contr.sum(2)/2))
+model5<-lmer(mean ~ phase + rivalry + group + (1|subject), data)
+model6<-lmer(mean ~ rivalry*phase*group + (1|subject), data , contrasts = list(phase = contr.sum(2)/2, rivalry = contr.sum(2)/2))
+
+modelselection<- anova(model1,model2,model3,model4,model5,model6)
+modelselection%>%
+  tidy()%>%
+  flextable()%>%
+  colformat_double(digits = 3) %>% 
+  width( width = 0.8)%>%
+      theme_vanilla()%>%
+  bg( i = ~ p.value < 0.05, bg = "#e6cc77", part = "body")
+
+
+```
+
+\newpage
+### Model selection : Emotion stability
+
+```{r anovamodels_stabemo, results='asis'}
+data <- stab%>%filter(procedure=="emotion")
+model1<-lmer(CT ~ 1 + (1|subject), data)
+model2<-lmer(CT ~ rivalry + (1|subject), data)
+model3<-lmer(CT ~ rivalry+group + (1|subject), data)
+model4<-lmer(CT ~ rivalry*group + (1|subject), data )
+
+
+modelselection<- anova(model1,model2,model3,model4)
+
+modelselection%>%
+  tidy()%>%
+  flextable()%>%
+  colformat_double(digits = 3) %>% 
+  width( width = 0.8)%>%
+      theme_vanilla()%>%
+  bg( i = ~ p.value < 0.05, bg = "#e6cc77", part = "body")
+
+
+```
+### Model selection : gender stability
+
+```{r anovamodels_stabgen, results='asis'}
+data <- stab%>%filter(procedure=="gender")
+model1<-lmer(CT ~ 1 + (1|subject), data)
+model2<-lmer(CT ~ rivalry + (1|subject), data)
+model3<-lmer(CT ~ rivalry+group + (1|subject), data)
+model4<-lmer(CT ~ rivalry*group + (1|subject), data )
+
+
+modelselection<- anova(model1,model2,model3,model4)
+
+modelselection%>%
+  tidy()%>%
+  flextable()%>%
+  colformat_double(digits = 3) %>% 
+  width( width = 0.8)%>%
+      theme_vanilla()%>%
+  bg( i = ~ p.value < 0.05, bg = "#e6cc77", part = "body")
+
+
+```
+
+
+
+# Emotion Rivalry
+
+## Anova model 6 emotion
+
+```{r anova_emotion, results='asis'}
+data <- dat%>%filter(procedure=="emotion")
+model6<-lmer(mean ~ rivalry*phase*group + (1|subject), data)
+
+fit<- anova(model6)
+
+
+fit%>%
+  tidy()%>%
+  flextable()%>%
+  colformat_double(digits = 3) %>% 
+    autofit()%>%
+      theme_vanilla()%>%
+  bg( i = ~ p.value < 0.05, bg = "#e6cc77", part = "body")
+
+
+# plot(allEffects(fit))
+
+```
+```{r plot_emotion}
+
+ plot(allEffects(model6))
+
+```
+Warning: Speed mean that higher values are faster.
+
+\newpage
+
+### Contrasts main effect phases
+```{r contrast_emotion_phase, results='asis'}
+x<-emmeans(model6,pairwise~ phase, adjust="bonf")
+
+x$emmeans%>%
+  as.data.frame()%>%
+  flextable()%>%
+  colformat_double(digits = 3) %>% 
+    autofit()%>%
+      theme_vanilla()%>%
+  add_header_lines(values = "Means phases emotion")
+
+
+x$contrasts%>%
+  as.data.frame()%>%
+  flextable()%>%
+  colformat_double(digits = 3) %>% 
+    autofit()%>%
+      theme_vanilla()%>%
+  add_header_lines(values = "Contrasts phases emotion")%>%
+  bg( i = ~ p.value < 0.05, bg = "#e6cc77", part = "body")
+
+
+```
+Note: phases are asymmetric: Dissolution is faster than formation.
+
+
+
+### Contrasts interaction rivalry:phases
+```{r contrast_emotion_rivalryphase, results='asis'}
+x<-emmeans(model6,pairwise~ rivalry|phase, adjust="bonf")
+
+x$emmeans%>%
+  as.data.frame()%>%
+  flextable()%>%
+  colformat_double(digits = 3) %>% 
+    autofit()%>%
+      theme_vanilla()%>%
+  add_header_lines(values = "Means rivalry|phases emotion")
+
+
+x$contrasts%>%
+  as.data.frame()%>%
+  flextable()%>%
+  colformat_double(digits = 3) %>% 
+    autofit()%>%
+      theme_vanilla()%>%
+  add_header_lines(values = "Contrasts rivalry|phases emotion")%>%
+  bg( i = ~ p.value < 0.05, bg = "#e6cc77", part = "body")
+
+
+```
+Notes: Happy Dissolution is faster than neutral Dissolution.
+Neutral Formation is faster than happy Formation.
+
+\newpage
+### Contrasts interaction rivalry:phases:gender
+```{r contrast_emotion_rivalryphasegroup, results='asis'}
+x<-emmeans(model6,pairwise~ group|phase|rivalry, adjust="bonf")
+#y<-emmeans(model6,pairwise~ rivalry|phase|group, adjust="bonf")
+
+
+x$emmeans%>%
+  as.data.frame()%>%
+  flextable()%>%
+  colformat_double(digits = 3) %>% 
+    autofit()%>%
+      theme_vanilla()%>%
+  add_header_lines(values = "Means group|phases|rivalry emotion")
+
+# y$emmeans%>%
+#   as.data.frame()%>%
+#   flextable()%>%
+#   colformat_double(digits = 3) %>% 
+#     autofit()%>%
+#       theme_vanilla()%>%
+#   add_header_lines(values = "Means group|phases|rivalry emotion")
+
+
+x$contrasts%>%
+  as.data.frame()%>%
+  flextable()%>%
+  colformat_double(digits = 3) %>% 
+    autofit()%>%
+      theme_vanilla()%>%
+  add_header_lines(values = "Contrasts group|phases|rivalry emotion")%>%
+  bg( i = ~ p.value < 0.05, bg = "#e6cc77", part = "body")
+
+# y$contrasts%>%
+#   as.data.frame()%>%
+#   flextable()%>%
+#   colformat_double(digits = 3) %>% 
+#     autofit()%>%
+#       theme_vanilla()%>%
+#   add_header_lines(values = "Contrasts rivalry|phases|group emotion")%>%
+#   bg( i = ~ p.value < 0.05, bg = "#e6cc77", part = "body")
+
+
+```
+Note: Dissolution happy is faster for female participants than for male participants. 
+
+\newpage
+# Gender Rivalry
+
+## Anova model 6 gender
+
+```{r anova_gender, results='asis'}
+data <- dat%>%filter(procedure=="gender")
+model6<-lmer(mean ~ rivalry*phase*group + (1|subject), data)
+
+fit<- anova(model6)
+
+
+fit%>%
+  tidy()%>%
+  flextable()%>%
+  colformat_double(digits = 3) %>% 
+    autofit()%>%
+      theme_vanilla()%>%
+  bg( i = ~ p.value < 0.05, bg = "#e6cc77", part = "body")
+
+
+# plot(allEffects(fit))
+
+```
+```{r plot_gender}
+
+ plot(allEffects(model6))
+
+```
+Warning: Speed mean that higher values are faster.
+
+\newpage
+
+### Contrasts main effect phases
+```{r contrast_gender_phase, results='asis'}
+x<-emmeans(model6,pairwise~ phase, adjust="bonf")
+
+x$emmeans%>%
+  as.data.frame()%>%
+  flextable()%>%
+  colformat_double(digits = 3) %>% 
+    autofit()%>%
+      theme_vanilla()%>%
+  add_header_lines(values = "Means phases gender")
+
+
+x$contrasts%>%
+  as.data.frame()%>%
+  flextable()%>%
+  colformat_double(digits = 3) %>% 
+    autofit()%>%
+      theme_vanilla()%>%
+  add_header_lines(values = "Contrasts phases gender")%>%
+  bg( i = ~ p.value < 0.05, bg = "#e6cc77", part = "body")
+
+
+```
+Note: phases are asymmetric: Dissolution is faster than formation.
+
+
+\newpage
+### Contrasts interaction rivalry:phases:gender
+```{r contrast_gender_rivalryphasegroup, results='asis'}
+x<-emmeans(model6,pairwise~ group|phase|rivalry, adjust="bonf")
+y<-emmeans(model6,pairwise~ rivalry|phase|group, adjust="bonf")
+
+
+# x$emmeans%>%
+#   as.data.frame()%>%
+#   flextable()%>%
+#   colformat_double(digits = 3) %>% 
+#     autofit()%>%
+#       theme_vanilla()%>%
+#   add_header_lines(values = "Means group|phases|rivalry gender")
+
+y$emmeans%>%
+  as.data.frame()%>%
+  flextable()%>%
+  colformat_double(digits = 3) %>% 
+    autofit()%>%
+      theme_vanilla()%>%
+  add_header_lines(values = "Means group|phases|rivalry gender")
+
+
+# x$contrasts%>%
+#   as.data.frame()%>%
+#   flextable()%>%
+#   colformat_double(digits = 3) %>% 
+#     autofit()%>%
+#       theme_vanilla()%>%
+#   add_header_lines(values = "Contrasts group|phases|rivalry gender")%>%
+#   bg( i = ~ p.value < 0.05, bg = "#e6cc77", part = "body")
+
+y$contrasts%>%
+  as.data.frame()%>%
+  flextable()%>%
+  colformat_double(digits = 3) %>% 
+    autofit()%>%
+      theme_vanilla()%>%
+  add_header_lines(values = "Contrasts rivalry|phases|group gender")%>%
+  bg( i = ~ p.value < 0.05, bg = "#e6cc77", part = "body")
+
+
+```
+Note: female participants: slower formation and faster dissolution of the male content.
+male participants: slower formation and faster dissolution of the female content.
+
+
+\newpage
+# Stability
+
+## Anova stability emotion model 4 
+```{r anova_emotion_stability, results='asis'}
+data <- stab%>%filter(procedure=="emotion")
+model4<-lmer(CT ~ rivalry*group + (1|subject), data )
+
+fit<- anova(model4)
+
+
+fit%>%
+  tidy()%>%
+  flextable()%>%
+  colformat_double(digits = 3) %>% 
+    autofit()%>%
+      theme_vanilla()%>%
+  bg( i = ~ p.value < 0.05, bg = "#e6cc77", part = "body")
+
+
+# plot(allEffects(fit))
+
+```
+```{r plot_emotion_stability}
+
+ plot(allEffects(model4))
+
+```
+Warning: CT mean that higher values are more stable.
+
+
+### Contrasts main effect rivalry
+```{r contrast_emotion_rivalry_stability, results='asis'}
+x<-emmeans(model4,pairwise~ rivalry, adjust="bonf")
+
+x$emmeans%>%
+  as.data.frame()%>%
+  flextable()%>%
+  colformat_double(digits = 3) %>% 
+    autofit()%>%
+      theme_vanilla()%>%
+  add_header_lines(values = "Means rivalry emotion")
+
+
+x$contrasts%>%
+  as.data.frame()%>%
+  flextable()%>%
+  colformat_double(digits = 3) %>% 
+    autofit()%>%
+      theme_vanilla()%>%
+  add_header_lines(values = "Contrasts rivalry emotion")%>%
+  bg( i = ~ p.value < 0.05, bg = "#e6cc77", part = "body")
+
+
+```
+
+
+### Contrasts interaction rivalry:group
+```{r contrast_emotion_rivalrgroup_stability, results='asis'}
+x<-emmeans(model4,pairwise~ rivalry|group, adjust="bonf")
+
+x$emmeans%>%
+  as.data.frame()%>%
+  flextable()%>%
+  colformat_double(digits = 3) %>% 
+    autofit()%>%
+      theme_vanilla()%>%
+  add_header_lines(values = "Means rivalry|group emotion")
+
+
+x$contrasts%>%
+  as.data.frame()%>%
+  flextable()%>%
+  colformat_double(digits = 3) %>% 
+    autofit()%>%
+      theme_vanilla()%>%
+  add_header_lines(values = "Contrasts rivalry|group emotion")%>%
+  bg( i = ~ p.value < 0.05, bg = "#e6cc77", part = "body")
+
+
+```
+### Contrasts interaction group:rivalry
+```{r contrast_emotion_grouprival_stability, results='asis'}
+x<-emmeans(model4,pairwise~ group|rivalry, adjust="bonf")
+
+x$emmeans%>%
+  as.data.frame()%>%
+  flextable()%>%
+  colformat_double(digits = 3) %>% 
+    autofit()%>%
+      theme_vanilla()%>%
+  add_header_lines(values = "Means group|rivalry emotion")
+
+
+x$contrasts%>%
+  as.data.frame()%>%
+  flextable()%>%
+  colformat_double(digits = 3) %>% 
+    autofit()%>%
+      theme_vanilla()%>%
+  add_header_lines(values = "Contrasts group|rivalry emotion")%>%
+  bg( i = ~ p.value < 0.05, bg = "#e6cc77", part = "body")
+
+
+```
+
+
+\newpage
+# Correlation between Speed, Valuation, mean of predominance
+## Correlation emotion rivalry (pearson)
+```{r cor_emo, results='asis'}
+
+chart.Correlation(emo, histogram=FALSE, pch=19,method ="pearson")
+
+# values<-emo%>%na.omit
+# 
+# 
+# corr <- round(cor(values), 1)
+# p.mat <- cor_pmat(values)
+# ggcorrplot(corr, hc.order = FALSE,
+#     type = "lower", lab=TRUE, insig = "blank")# p.mat = p.mat)
+```
+The no significant coefficient is barred.
+
+VL    : valence
+AR    : arousal
+MP    : mean of predominance
+DS    : dissolution
+FR    : formation
+\newpage
+## Correlation gender rivalry (pearson)
+```{r cor_gen, results='asis'}
+chart.Correlation(gen, histogram=FALSE, pch=19,method ="pearson")
+
+# values<-gen%>%na.omit
+# corr <- round(cor(values), 1)
+# p.mat <- cor_pmat(values)
+# ggcorrplot(corr, hc.order = FALSE,
+#     type = "lower", lab=TRUE, insig = "blank")# p.mat = p.mat)
+```
+The no significant coefficient is barred.
+
+VL    : valence
+AR    : arousal
+MP    : mean of predominance
+DS    : dissolution
+FR    : formation
+
+
+
+

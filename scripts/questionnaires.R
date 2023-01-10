@@ -14,9 +14,12 @@ rm(list=ls()) # remove all objects
 library(tidyverse)
 library(PerformanceAnalytics)
 
+library(here)
+
 # Data --------------------------------------------------------------------
 
 load("data/Qualia_joystick.RData") 
+stab <- readRDS(here("data","stability.rds"))
 
 questionnaire<-questionnaires%>%
   select(id, age,group,fantasy,personal_distress,perspective_taking,empathic_concern,iri_tot,tas_tot)
@@ -26,13 +29,46 @@ Questionnaire<-questionnaire%>%
 
 
 # Valuation
-val<-valuation_dataset%>%
-  select( subject,group,procedure,emotion, score) %>%
-  group_by(subject,group,procedure,emotion) %>%
+val<-VAVplot<-valuation_dataset%>%
+  mutate(score= case_when(procedure=="Valence" & score== 1 ~ -3,
+                          procedure=="Valence" & score== 2 ~ -2,
+                          procedure=="Valence" & score== 3 ~ -1,
+                          procedure=="Valence" & score== 4 ~ 0,
+                          procedure=="Valence" & score== 5 ~ 1,
+                          procedure=="Valence" & score== 6 ~ 2,
+                          procedure=="Valence" & score== 7 ~ 3,
+                          procedure=="Arousal" & score== 1 ~ 1,
+                          procedure=="Arousal" & score== 2 ~ 2,
+                          procedure=="Arousal" & score== 3 ~ 3,
+                          procedure=="Arousal" & score== 4 ~ 4,
+                          procedure=="Arousal" & score== 5 ~ 5,
+                          procedure=="Arousal" & score== 6 ~ 6,
+                          procedure=="Arousal" & score== 7 ~ 7))%>%
+  na.omit()%>%
+  group_by(subject,group,emotion,procedure)%>%
   summarise_at(vars(score), list(mean))%>%
-  mutate(procedure=paste0(procedure,".",emotion))%>%
-  select( subject,group, procedure, score) %>%
-  spread(procedure, score)
+  mutate(Face=  emotion,
+         procedure = ifelse(procedure =="Arousal", "AR","VL" ),
+         Face = paste0(procedure,".",Face))%>%
+  ungroup()%>%
+  select( subject,Face, score) %>%
+  spread(Face, score)
+
+# group_by(subject,group,file,procedure)%>%
+#   summarise_at(vars(score), list(mean))%>%
+#   mutate(Face=  case_when(file=="HF"  ~ "happy.female",
+#                           file=="NF"  ~ "neutral.female",
+#                           file=="HM"  ~ "happy.male",
+#                           file=="NM"  ~ "neutral.male"),
+#          procedure = ifelse(procedure =="Arousal", "AR","VL" ),
+#          Face = paste0(procedure,".",Face))%>%
+#   ungroup()%>%
+#   select( subject,Face, score) %>%
+#   spread(Face, score)
+
+v<-val[,-1]
+# %>%
+#   'colnames<-'(c("AR.happy.female","AR.happy.male","AR.neutral.female","AR.neutral.male" ,"VL.happy.female","VL.happy.male","VL.neutral.female","VL.neutral.male"  ))
 val<-cbind(Questionnaire,val[,3:6])%>%
   'colnames<-'(c("IRI.F", "IRI.PT", "IRI.EC", "IRI.PD" ,"IRI.TOT","TAS.TOT" ,"AR.HPY", "AR.NEU","VAL.HPY", "VAL.NEU"))
 
@@ -55,43 +91,57 @@ PM<-joystick_dataset%>%
   na.omit()%>%#cf function trial vec
   select(subject,group,procedure,pm)%>%
   spread(procedure,pm)
+p<-PM[,-c(1,2)]%>%
+  'colnames<-'(c("MP.emotion","MP.gender"))
+  
 PM<-cbind(Questionnaire,PM[,3:4])%>%
   'colnames<-'(c("IRI.F", "IRI.PT", "IRI.EC", "IRI.PD" ,"IRI.TOT","TAS.TOT" ,"PM.EMO", "PM.GEN"))
 
 
 # MT
-MT<-joystick_dataset%>% #cf function trial vec
-  select(subject,group,attribut,procedure,vector,x)%>%
-  filter(vector != 0 )%>%
-  mutate(direction = ifelse(  vector > 0 ,"plus","minus" ))%>%
-  select(subject,group,procedure,direction,x,vector)%>%
-  mutate(x = (x+1)/2,
-         x= ifelse(direction == "minus",1-x,x),
-         x= ifelse(x >= .5,"enter","exit"),
-         vector= abs(vector),
-         vector = round(vector,3),
-         direction= case_when(direction=="minus" & procedure == "emotion"  ~ "to happy",
-                              direction=="minus" & procedure == "gender"  ~ "to male",
-                              direction=="plus" & procedure == "emotion"  ~ "to neutral",
-                              direction=="plus" & procedure == "gender"  ~ "to female" ))%>%
-  'colnames<-'(c("subject","group" , "procedure", "direction" , "joystick", "vector"))%>%
-  group_by(subject,group,procedure,direction,joystick)%>%
-  summarise_at(vars(vector), list(mean))%>%
-  select(subject,group ,procedure,direction,joystick,vector)%>%
-  'colnames<-'(c("subject","group" , "procedure", "direction" , "joystick", "speed"))%>%
-  mutate( direction= case_when(direction == "to neutral" & joystick== "enter" ~ "enter to neutral",
-                               direction == "to neutral" & joystick== "exit" ~ "exit from happy",
-                               direction == "to happy" & joystick== "enter" ~ "enter to happy",
-                               direction == "to happy" & joystick== "exit" ~ "exit from neutral",
-                               direction == "to male" & joystick== "enter" ~ "enter to male",
-                               direction == "to male" & joystick== "exit" ~ "exit from female",
-                               direction == "to female" & joystick== "enter" ~ "enter to female",
-                               direction == "to female" & joystick== "exit" ~ "exit from male"))%>%
-  ungroup()%>%
-  select(-procedure,-joystick)%>%
-  spread(direction,speed)
-MT<-cbind(Questionnaire,MT[,3:10])%>%
+MT<- readRDS(here("data","data.rds"))
+MT<-MT%>%
+  group_by(subject,category)%>%
+  summarise_at(vars(mean),list(mean))%>%
+  'colnames<-'(c("subject","category","speed"))%>%
+  spread(category,speed)
+m<-MT[,-1]%>%
+  'colnames<-'(c("DS.Female", "FR.Female", "DS.Happy", "FR.Happy", "DS.Male", "FR.Male", "DS.Neutral", "FR.Neutral"))
+  
+
+MT<-cbind(Questionnaire,MT[,-1])%>%
   'colnames<-'(c("IRI.F", "IRI.PT", "IRI.EC", "IRI.PD" ,"IRI.TOT","TAS.TOT" ,"MT.ENT.FEM", "MT.ENT.HTX", "MT.ENT.MAL", "MT.ENT.NEU","MT.EXT.FEM", "MT.EXT.HTX", "MT.EXT.MAL", "MT.EXT.NEU"))
+
+#CT
+c<-stab%>%
+  group_by(subject, category)%>%
+  summarise_at(vars(CT),list(mean),na.rm = TRUE)%>%
+  mutate(category = case_when(category == "NS" ~ "CT.neutral",
+                              category == "HS" ~ "CT.happy",
+                              category == "FS" ~ "CT.female",
+                              category == "MS" ~ "CT.male"))%>%
+  ungroup()%>%
+  spread(category, CT)%>%
+  select( -subject)
+
+
+
+#  --------------------------------------------------------------------
+# emo<-cbind(v,p,m)%>%
+#   select(AR.happy.female,AR.happy.male,AR.neutral.female,AR.neutral.male ,VL.happy.female,VL.happy.male,VL.neutral.female,VL.neutral.male, 
+#      MP.emotion, DS.Happy, FR.Happy, DS.Neutral, FR.Neutral)
+# gen<-cbind(v,p,m)%>%
+#   select(AR.happy.female,AR.happy.male,AR.neutral.female,AR.neutral.male ,VL.happy.female,VL.happy.male,VL.neutral.female,VL.neutral.male, 
+#          MP.gender, DS.Female, FR.Female,  DS.Male, FR.Male)
+
+emo<-cbind(v,p,m,c)%>%
+  select(AR.happy,AR.neutral ,VL.happy,VL.neutral, 
+         DS.Happy, FR.Happy, DS.Neutral, FR.Neutral,CT.happy,CT.neutral)
+gen<-cbind(v,p,m,c)%>%
+  select(AR.happy,AR.neutral ,VL.happy,VL.neutral,  
+         DS.Female, FR.Female,  DS.Male, FR.Male,CT.female,CT.male)
+saveRDS(emo, file = file.path("data",  "emotion_correlation.rds"))
+saveRDS(gen, file = file.path("data",  "gender_correlation.rds"))
 
 # Summary --------------------------------------------------------------------
 
@@ -129,6 +179,14 @@ jpeg("figures/cor_MT.jpg", units="in", width=10, height=8, res=200)
 chart.Correlation(MT, histogram=FALSE, pch=19,method ="pearson")
 dev.off()
 
+
+jpeg("figures/cor_emotion.jpg", units="in", width=10, height=8, res=200)
+chart.Correlation(emo, histogram=FALSE, pch=19,method ="pearson")
+dev.off()
+
+jpeg("figures/cor_gender.jpg", units="in", width=10, height=8, res=200)
+chart.Correlation(gen, histogram=FALSE, pch=19,method ="pearson")
+dev.off()
 ################################################
 # 
 # END
