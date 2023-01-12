@@ -3,7 +3,7 @@
 # Experiment:     QualiaJoystick_binocular_rivalry
 # Programmer:     Thomas Quettier
 # Date:           02/09/2022
-# Description:    cumilative time   - binocular rivalry
+# Description:    cumulative time   - binocular rivalry
 #
 #################################################
 

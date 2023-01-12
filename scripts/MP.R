@@ -3,7 +3,7 @@
 # Experiment:     QualiaJoystick_binocular_rivalry
 # Programmer:     Thomas Quettier
 # Date:           02/09/2022
-# Description:    Predominance mean - binocular rivalry
+# Description:    mean of predominance - binocular rivalry
 #
 #################################################
 

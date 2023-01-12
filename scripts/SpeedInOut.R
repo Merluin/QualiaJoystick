@@ -3,7 +3,7 @@
 # Experiment:     QualiaJoystick_binocular_rivalry
 # Programmer:     Thomas Quettier
 # Date:           02/09/2022
-# Description:    speed in anmd out   - binocular rivalry
+# Description:    speed in and out   - binocular rivalry
 #
 #################################################
 

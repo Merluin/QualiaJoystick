@@ -3,7 +3,7 @@
 # Experiment:     QualiaJoystick_binocular_rivalry
 # Programmer:     Thomas Quettier
 # Date:           02/09/2022
-# Description:    chuncks switches   - binocular rivalry
+# Description:    data_speed.rds, data_ct.Rdata   - binocular rivalry
 #
 #################################################
 
@@ -152,66 +152,6 @@ filtered_STB<- epoch_data%>%
 
 save(filtered_ct,filtered_STB, file = file.path("data",  "data_ct.Rdata"))
 
-
-
-#plot figure paper
-#image coding
-HM <- image_fill(image_read("images/HM.png"), 'none')
-HM <- as.raster(HM)
-NM <- image_fill(image_read("images/NM.png"), 'none')
-NM <- as.raster(NM)
-
-
-plot<-datagender%>%
-  filter(subject == 2, row == 2)%>%
-  mutate(Epochs = case_when(category == "MS"~ "stabilisation",
-                            category == "FS"~ "stabilisation",
-                            category == "MD" ~ "dissolution",
-                            category == "MF" ~ "formation",
-                            category == "FD" ~ "dissolution",
-                            category == "FF" ~ "formation"),
-         ms = parse_number(ms)*10)
-
-plot%>%
-  epochs(lag = 20)%>%
-  group_by(category,epoch)%>%
-  summarise_at(vars(x,vector),list(mean,min,max))%>%
-  select( category, epoch, vector_fn1, x_fn2, x_fn3)%>%
-  mutate(flat = x_fn2 - x_fn3)%>%
-  filter(flat <= -0.01)
-
-meanspeed <- c(0.0233, 0.037, 0.0236, 0.083, 0.0331)
-stabilisation - c(211,260,241)
-
-
-
-plot%>%
-  ggplot(aes(y = x, x = ms, colour = Epochs)) +
-  geom_line(aes(group=1), size = 1) + 
-  scale_colour_manual(values = c("#fd345a", "#008b39", "#0000FF")) +
-  theme_minimal() +
-  annotation_custom2(rasterGrob(NM, interpolate=TRUE),ymax = 1,ymin = 0.6,xmin = 0, xmax = 160, data=plot) +
-  annotation_custom2(rasterGrob(HM, interpolate=TRUE),ymax = -1,ymin = -0.6,xmin = 0, xmax = 160, data=plot) +
-  xlab("Trial duration (ms)") +
-  ylab("Joystick position") +
-  ylim(-1, 1) +
-  theme(axis.title.x = element_text(size = 14, family="Arial"),#, face = "bold"),
-        axis.title.y = element_text(size = 14, family="Arial"),#, face = "bold"),
-        axis.ticks = element_blank(),
-        strip.text.x = element_text(size = 11, family="Arial"),#, face = "bold"),
-        strip.text.y = element_text(size = 11, family="Arial"),#, face = "bold"),
-        panel.background = element_rect(fill = "white", color = NA))+
-  theme(legend.position = "bottom")+
-  geom_text(aes(x = 2000, y = -0.45, label ="Speed in = 0.0233"),angle = 290,size = 3, color = "#008b39") +
-  geom_text(aes(x = 3100, y = -0.93, label ="STB = 2110 ms"),size = 3, color = "#0000FF")+
-  geom_text(aes(x = 4000, y = -0.5, label ="Speed out = 0.037"),angle = 86,size = 3, color = "#fd345a") +
-  geom_text(aes(x = 5000, y = 0.5, label ="Speed in = 0.0236"),angle = 70,size = 3, color = "#008b39") +
-  geom_text(aes(x = 7000, y = 0.93, label ="STB = 2600 ms"),size = 3, color = "#0000FF") +
-  geom_text(aes(x = 8500, y = 0.5, label ="Speed out = 0.083"),angle = 283,size = 3, color = "#fd345a") +
-  geom_text(aes(x = 12000, y = -0.5, label ="Speed in= 0.0331"),angle = 275,size = 3, color = "#008b39") +
-  geom_text(aes(x = 13600, y = -0.93, label ="STB = 2410 ms"),size = 3, color = "#0000FF")
-
-ggsave("figures/trial.tiff", units="px", width=911, height=380, dpi=200, compression = 'lzw')
 
 #################################################
 # 
