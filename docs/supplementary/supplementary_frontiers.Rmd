@@ -19,6 +19,7 @@ header-includes:
   - \usepackage{lscape}
   - \newcommand{\blandscape}{\begin{landscape}}
   - \newcommand{\elandscape}{\end{landscape}}
+---
 
 ```{r setup, include=FALSE, cache=FALSE}
 knitr::opts_chunk$set(echo = FALSE,
@@ -30,7 +31,7 @@ knitr::opts_chunk$set(echo = FALSE,
 ```
 
 ```{r packages, cache=FALSE}
-
+devtools::load_all()
 library(here)
 library(magrittr)
 library(tidyr)
@@ -62,16 +63,42 @@ stab <- readRDS(here("data","stability.rds"))
 ```
 
 
+```{r functions}
+tidy_prior <- function(data){
+  data %>% 
+    select(-source, -group, -resp, -nlpar, -lb, -ub)
+}
+
+qtab <- function(data, max_width = 6){
+  data %>% 
+    flextable() %>% 
+    autofit() %>% 
+    theme_vanilla() %>% 
+    fit_to_width(max_width = max_width)
+}
+
+get_chunk_label <- function(){
+  knitr::opts_current$get("label")
+}
+
+theme_paper <- function(font_size = 25){
+  cowplot::theme_minimal_grid(font_size = font_size)
+}
+
+newpage <- function(){
+  cat("\\newpage\n")
+}
+```
+
+
 # General approach
 
 We used R (R Core Team, 2012) and lme4 (Bates, Maechler & Bolker, 2012) to perform a linear mixed effects analysis of the relationship between rivalry and consciousness phases. As fixed effects, we entered rivalry and phases (with interaction term) into the model. As random effects, we had intercepts for subjects. Visual inspection of residual plots did not reveal any obvious deviations from homoscedasticity or normality. P-values were obtained by anova of the full models for gender blocks and emotion blocks:
 
-
-```{r bestmodel, eval = FALSE, echo = TRUE}
-
+```{r circular-brms, eval = FALSE, echo = TRUE}
 fit <- lmer(mean ~ rivalry*phase + (1|subject)
-
 ```
+
 
 \newpage
 ## model selection
@@ -79,7 +106,7 @@ fit <- lmer(mean ~ rivalry*phase + (1|subject)
 The logic of the model selection is to compare the likelihood of different models. First, the model without any factor (the
 null model), then each model add a factor that we are interested in.
 
-```{r modelsselection, eval = FALSE, echo = TRUE}
+```{r perceived-intensity-brms, eval = FALSE, echo = TRUE}
 
 model1<-lmer(speed ~ 1 + (1|subject), dat) # null model
 
@@ -102,10 +129,10 @@ anova(model1,model2)
 
 ```
 
-
 ### Model selection : Emotion rivalry (Speed)
 
-```{r anovamodels_emotion, results='asis'}
+
+```{r circular-tables, results='asis'}
 data <- dat%>%filter(procedure=="emotion")
 
 model1<-lmer(mean ~ 1 + (1|subject), data)
@@ -125,12 +152,9 @@ modelselection%>%
   bg( i = ~ p.value < 0.05, bg = "#e6cc77", part = "body")
 ```
 
-
-
 ### Model selection : Gender rivalry  (Speed)
 
-
-```{r anovamodels_gender, results='asis'}
+```{r intensity-tables, results='asis'}
 data <- dat%>%filter(procedure=="gender")
 
 model1<-lmer(mean ~ 1 + (1|subject), data)
@@ -147,13 +171,13 @@ modelselection%>%
       theme_vanilla()%>%
   bg( i = ~ p.value < 0.05, bg = "#e6cc77", part = "body")
 
-
 ```
 
 \newpage
 ### Model selection : Emotion stability  (Cumulative time)
 
-```{r anovamodels_stabemo, results='asis'}
+
+```{r prior-sens-circular, results='asis'}
 data <- stab%>%filter(procedure=="emotion")
 model1<-lmer(CT ~ 1 + (1|subject), data)
 model2<-lmer(CT ~ rivalry + (1|subject), data)
@@ -170,11 +194,12 @@ modelselection%>%
       theme_vanilla()%>%
   bg( i = ~ p.value < 0.05, bg = "#e6cc77", part = "body")
 
-
 ```
+
 ### Model selection : gender stability (cumulative time)
 
-```{r anovamodels_stabgen, results='asis'}
+
+```{r prior-sens-perceived-intensity, results='asis'}
 data <- stab%>%filter(procedure=="gender")
 model1<-lmer(CT ~ 1 + (1|subject), data)
 model2<-lmer(CT ~ rivalry + (1|subject), data)
@@ -191,7 +216,6 @@ modelselection%>%
       theme_vanilla()%>%
   bg( i = ~ p.value < 0.05, bg = "#e6cc77", part = "body")
 
-
 ```
 
 
@@ -199,9 +223,3 @@ modelselection%>%
 **References**
 
 Bates, Douglas, Martin Mächler, Ben Bolker, and Steve Walker. 2014. “Fitting Linear Mixed-Effects Models Using lme4.” arXiv [stat.CO]. arXiv. http://arxiv.org/abs/1406.5823.
-
-
-
-
-
-
