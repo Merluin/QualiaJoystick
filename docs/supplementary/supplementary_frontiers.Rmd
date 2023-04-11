@@ -51,6 +51,9 @@ library(broom.mixed)
 library(effects)
 library(ggcorrplot)
 library(PerformanceAnalytics)
+library(pander)
+library(knitr)
+library(afex)
 
 devtools::load_all()
 ```
@@ -60,6 +63,7 @@ dat <- readRDS(here("data","data.rds"))
 emo <- readRDS(here("data","emotion_correlation.rds"))
 gen <- readRDS(here("data","gender_correlation.rds"))
 stab <- readRDS(here("data","stability.rds"))
+median <- readRDS(here("data","data_median.rds"))
 ```
 
 
@@ -218,6 +222,44 @@ modelselection%>%
 
 ```
 
+# Correlations tables
+
+
+
+Correlation are not corrected for multiple comparison. Code is available here: https://osf.io/2pzmg/
+
+
+### Valence, Arousal and BR measures
+
+DS = Dissolution (Speed out)\
+FR = Formation (Speed in)\
+PSP = Period of stable perception\
+AR  = Arousal\
+VL  =  Valence\
+
+
+![Pearson, two-sided correlations between Valence, Arousal and BR measures. . = p < .1 * = p < .05 ** = p < .01 *** = p <.001](../../figures/cor_valBR.jpg)
+
+# Medians
+
+
+Here we report the predominance median, which is similar to the predominance mean (PM) but with the median instead of the mean.
+
+```{r analysis_median}
+ a1 <- aov_ez("subject", "pm", pm, within = "procedure", between = "group")
+ e1 <- emmeans(a1, pairwise ~ procedure, adjust = "bonf")
+# Extract ANOVA table and convert to markdown
+ 
+ anova_table <- anova(a1)
+# anova_md <- pandoc.table(anova_table)
+# 
+# # Add row names to the table
+# rownames(anova_md) <- c("Between Groups", "Within Groups", "Interaction")
+# 
+# # Print the markdown table
+# kable(anova_md, format = "markdown")
+
+```
 
 
 **References**

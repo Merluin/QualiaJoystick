@@ -37,6 +37,7 @@ filtered_data<-readRDS("data/data_speed.rds")
 data_emotion <- filtered_data%>%filter(procedure=="emotion")
 data_gender <- filtered_data%>%filter(procedure=="gender")
 
+
 # lmer emotion
 e1<-lmer(mean ~ 1 + (1|subject), data_emotion)
 e2<-lmer(mean ~ phase + (1|subject), data_emotion)
@@ -90,20 +91,23 @@ ggsave("figures/Speed_emotion.tiff", units="in", width=5, height=4, dpi=200, com
 
 #plot main effect phase emotion
 data_emotion$phase <- factor(data_emotion$phase, levels = c("formation","disolution"))
+data_emotion$mean<-abs(data_emotion$median)
+
 data_emotion%>%
   filter(category != "HS",category != "NS")%>%
   select(subject,category,row,rivalry,phase,epoch,mean)%>%
   group_by(subject,rivalry,phase)%>%
   summarise_at(vars(mean),list(mean))%>%
   ggplot() +
-  geom_pirate( aes(x = phase, y = mean, fill= rivalry))+
+  geom_pirate( aes(x = phase, y = mean, fill= rivalry), bars = FALSE)+
   theme(text=element_text(size=14,  family="Arial"),
         panel.background = element_blank(),
         axis.line = element_line(colour = "black"))+
   scale_x_discrete(name="",labels=c("formation", "dissolution"))+
   xlab("Speed labels")+
-  ylab("Joystick Speed")+
-  scale_fill_manual(values=c("#008b39","#fd345a"))
+  ylab("Joystick Speed")
+ # scale_fill_manual(values=c("#008b39","#fd345a"))
+
 ggsave("figures/main_phase.tiff", units="in", width=5, height=4, dpi=200, compression = 'lzw')
 
 data_emotion%>%
@@ -199,14 +203,14 @@ data_gender%>%
    group_by(subject,category,rivalry,phase)%>%
    summarise_at(vars(mean),list(mean))%>%
   ggplot() +
-  geom_pirate( aes(x = phase, y = mean, fill = rivalry))+
+  geom_pirate( aes(x = phase, y = mean, fill = rivalry), bars = FALSE) +
   theme(text=element_text(size=14,  family="Arial"),
         panel.background = element_blank(),
         axis.line = element_line(colour = "black"))+
   scale_x_discrete(name="",labels=c("formation", "dissolution"))+
   xlab("Speed labels")+
-  ylab("Joystick Speed")+
-  scale_fill_manual(values=c("#becbec","#ffff99"))
+  ylab("Joystick Speed")
+  #scale_fill_manual(values=c("#becbec","#ffff99"))
 ggsave("figures/Speed.tiff", units="in", width=5, height=4, dpi=200, compression = 'lzw')
 
 

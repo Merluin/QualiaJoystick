@@ -106,6 +106,7 @@ filtered_data<- epoch_data%>%
   mutate(mean = abs(mean))
 
 saveRDS(filtered_data, file = file.path("data",  "data_speed.rds"))
+
  
 # Stability
 

@@ -70,15 +70,15 @@ filtered_ct%>%
   group_by(subject,category,rivalry,phase)%>%
   summarise_at(vars(CT),list(mean))%>%
   ggplot() +
-  geom_pirate( aes(x = category, y = CT, fill = category))+
+  geom_pirate( aes(x = category, y = CT, fill = category), bars = FALSE)+
   geom_hline(yintercept = 0)+
   theme(text=element_text(size=16,  family="Arial"),
         panel.background = element_blank(),
         axis.line = element_line(colour = "black"))+
   scale_x_discrete(name="",labels=c("happy", "neutral", "female", "male"), 
                    guide = guide_axis(angle = 0))+
-  ylab("Cumulative time (ms)")+
-  scale_fill_manual(values=c("#008b39","#fd345a"))
+  ylab("Cumulative time (ms)")
+  #scale_fill_manual(values=c("#008b39","#fd345a"))
 
 filtered_ct%>%
   mutate(category = case_when(category == "FS" ~ "d",
@@ -90,15 +90,15 @@ filtered_ct%>%
   group_by(subject,category,rivalry,phase)%>%
   summarise_at(vars(CT),list(mean))%>%
   ggplot() +
-  geom_pirate( aes(x = category, y = CT, fill = category))+
+  geom_pirate( aes(x = category, y = CT, fill = category), bars = FALSE)+
   geom_hline(yintercept = 0)+
   theme(text=element_text(size=16,  family="Arial"),
         panel.background = element_blank(),
         axis.line = element_line(colour = "black"))+
   scale_x_discrete(name="",labels=c("female", "male"), 
                    guide = guide_axis(angle = 0))+
-  ylab("Cumulative time (ms)")+
-  scale_fill_manual(values=c("#becbec","#ffff99"))
+  ylab("Cumulative time (ms)")
+  #scale_fill_manual(values=c("#becbec","#ffff99"))
  
 # emotion
 data <- filtered_ct%>%filter(procedure=="emotion")

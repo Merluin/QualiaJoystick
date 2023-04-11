@@ -14,7 +14,7 @@ rm(list=ls()) # remove all objects
 library(tidyverse)
 library(ggpirate)
 library(afex)
-
+library(emmeans)
 
 # Data --------------------------------------------------------------------
 
@@ -41,7 +41,7 @@ pm<-joystick_dataset%>%
 pm%>%
   'colnames<-'(c("subject","group","Condition","PM","attribut"))%>%
   ggplot( aes(x = Condition, y = PM)) +
-  geom_pirate(aes(fill = Condition))+
+  geom_pirate(aes(fill = Condition), bars = FALSE)+
   geom_hline(yintercept = 0)+
   theme(text=element_text(size=16,  family="Arial"),
         panel.background = element_blank(),

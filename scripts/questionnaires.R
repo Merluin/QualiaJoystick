@@ -69,7 +69,7 @@ val<-VAVplot<-valuation_dataset%>%
 v<-val[,-1]
 # %>%
 #   'colnames<-'(c("AR.happy.female","AR.happy.male","AR.neutral.female","AR.neutral.male" ,"VL.happy.female","VL.happy.male","VL.neutral.female","VL.neutral.male"  ))
-val<-cbind(Questionnaire,val[,3:6])%>%
+val<-cbind(Questionnaire,val[,2:5])%>%
   'colnames<-'(c("IRI.F", "IRI.PT", "IRI.EC", "IRI.PD" ,"IRI.TOT","TAS.TOT" ,"AR.HPY", "AR.NEU","VAL.HPY", "VAL.NEU"))
 
 
@@ -112,19 +112,27 @@ m<-MT[,-1]%>%
 MT<-cbind(Questionnaire,MT[,-1])%>%
   'colnames<-'(c("IRI.F", "IRI.PT", "IRI.EC", "IRI.PD" ,"IRI.TOT","TAS.TOT" ,"MT.ENT.FEM", "MT.ENT.HTX", "MT.ENT.MAL", "MT.ENT.NEU","MT.EXT.FEM", "MT.EXT.HTX", "MT.EXT.MAL", "MT.EXT.NEU"))
 
-#CT
-c<-stab%>%
-  group_by(subject, category)%>%
-  summarise_at(vars(CT),list(mean),na.rm = TRUE)%>%
-  mutate(category = case_when(category == "NS" ~ "CT.neutral",
-                              category == "HS" ~ "CT.happy",
-                              category == "FS" ~ "CT.female",
-                              category == "MS" ~ "CT.male"))%>%
-  ungroup()%>%
-  spread(category, CT)%>%
-  select( -subject)
+# PSP
+PSP<- stab
+PSP<-PSP%>%
+  group_by(subject,category)%>%
+  summarise_at(vars(CT),list(mean))%>%
+  'colnames<-'(c("subject","category","PSP"))%>%
+  spread(category,PSP)
+s<-PSP[,-1]%>%
+  'colnames<-'(c("PSP.Female", "PSP.Happy", "PSP.Male", "PSP.Neutral"))
 
+PSP<-cbind(Questionnaire,s)%>%
+  'colnames<-'(c("IRI.F", "IRI.PT", "IRI.EC", "IRI.PD" ,"IRI.TOT","TAS.TOT" ,"PSP.Female", "PSP.Happy", "PSP.Male", "PSP.Neutral"))
 
+# valence and arousal -> BR
+c<-cbind(m,s,v)
+jpeg("figures/cor_valBR.jpg", units="in", width=10, height=8, res=200)
+chart.Correlation(c, histogram=FALSE, pch=19,method ="pearson")
+dev.off()
+
+p<-cor.test(c[,10],c[,15])
+p.adjust(p$p.value, method = "bonferroni", n = 6)
 
 #  --------------------------------------------------------------------
 # emo<-cbind(v,p,m)%>%
@@ -187,8 +195,15 @@ dev.off()
 jpeg("figures/cor_gender.jpg", units="in", width=10, height=8, res=200)
 chart.Correlation(gen, histogram=FALSE, pch=19,method ="pearson")
 dev.off()
+
+jpeg("figures/cor_Speed.jpg", units="in", width=10, height=8, res=200)
+chart.Correlation(PSP, histogram=FALSE, pch=19,method ="pearson")
+dev.off()
+
+
 ################################################
 # 
 # END
 #
 ################################################
+
